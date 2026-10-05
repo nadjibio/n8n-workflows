@@ -1,0 +1,97 @@
+{
+  "name": "sample workflow",
+  "description": "",
+  "triggerType": "Webhook",
+  "tags": [],
+  "dsl": {
+    "nodes": [
+      {
+        "id": "w1",
+        "name": null,
+        "next": "h1",
+        "type": "WebhookTrigger",
+        "slots": null,
+        "config": {
+          "path": "test-051026",
+          "method": "GET",
+          "__pos__": {
+            "x": -76,
+            "y": 60
+          },
+          "responseMode": "responseNode",
+          "auth": {
+            "type": "header",
+            "credentialId": "70b4503c-2ea4-4cac-b830-6e7d875a2b5c"
+          }
+        },
+        "onTrue": null,
+        "onError": null,
+        "onFalse": null,
+        "disabled": null,
+        "compensator": null,
+        "parentScope": null
+      },
+      {
+        "id": "h1",
+        "name": null,
+        "next": "r1",
+        "type": "HttpRequest",
+        "slots": null,
+        "config": {
+          "url": "https://jsonplaceholder.typicode.com/users",
+          "body": null,
+          "method": "GET",
+          "__pos__": {
+            "x": 64,
+            "y": 60
+          },
+          "headers": {},
+          "timeoutMs": 30000,
+          "auth": {
+            "kind": "header",
+            "credentialId": "70b4503c-2ea4-4cac-b830-6e7d875a2b5c",
+            "type": "header"
+          }
+        },
+        "onTrue": null,
+        "onError": null,
+        "onFalse": null,
+        "disabled": null,
+        "compensator": null,
+        "parentScope": null
+      },
+      {
+        "id": "r1",
+        "name": null,
+        "next": null,
+        "type": "RespondToWebhook",
+        "slots": null,
+        "config": {
+          "body": "{\"ok\":true}",
+          "mode": "literal",
+          "__pos__": {
+            "x": 204,
+            "y": 60
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "statusCode": 200,
+          "responseKind": "body"
+        },
+        "onTrue": null,
+        "onError": null,
+        "onFalse": null,
+        "disabled": null,
+        "compensator": null,
+        "parentScope": null
+      }
+    ],
+    "version": 1,
+    "startNodeId": "w1",
+    "parallelBranches": null,
+    "n8nCompatExecution": null
+  },
+  "exportedAt": "2026-10-05T05:04:14.949Z",
+  "exportedFrom": "https://neurix.opt-test.iohealth.com"
+}
