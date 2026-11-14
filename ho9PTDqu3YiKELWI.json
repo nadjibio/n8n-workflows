@@ -1,0 +1,118 @@
+{
+  "name": "Demo Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1f957425-bc52-44dc-b084-bd45af04777d",
+      "name": "Webhook",
+      "webhookId": "78a8f8a0-30b6-48b9-9952-a39c9d279cc7"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"ok\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "19f05aa6-92c6-4d52-b184-b8a18eea43a7",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/users",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1ac94dfe-a49e-4bba-8110-7751a0150f9d",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "logics-test.uae.iohealth.com",
+            "user-agent": "curl/8.21.0",
+            "content-length": "0",
+            "accept": "*/*",
+            "x-forwarded-for": "10.0.3.173",
+            "x-forwarded-host": "logics-test.uae.iohealth.com",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-699cbfbdcd-t5ljs",
+            "x-real-ip": "10.0.3.173",
+            "accept-encoding": "gzip"
+          },
+          "params": {},
+          "query": {},
+          "body": {},
+          "webhookUrl": "https://logics-test.uae.iohealth.com/webhook/demo-agent",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1a47a8f6-2c58-4de5-98a0-832311f01b49",
+  "meta": {
+    "instanceId": "1307138f546dca35b2c3a418dcf97c1e25d1ec8966daebcd7afb0793d2ea9664"
+  },
+  "nodeGroups": [],
+  "id": "ho9PTDqu3YiKELWI",
+  "tags": []
+}
