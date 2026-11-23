@@ -1,0 +1,506 @@
+{
+  "name": "Appointment Reminder",
+  "id": "A4nlhDNuxJO7D3OP",
+  "versionId": "4fc75171-d38f-45ea-ac08-b274ee852eee",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "appointment-reminder",
+        "responseMode": "responseNode",
+        "options": {},
+        "authentication": "headerAuth"
+      },
+      "id": "a4e1e4a3-a3a8-4715-b73b-c8d8913aea94",
+      "name": "Reminder request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        176
+      ],
+      "webhookId": "1a5f6bfe-0af0-4425-b5c9-2bd4e6daaef2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AT3PyloBOKJx6EPX",
+          "name": "test-gemma"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-name",
+              "leftValue": "={{ $json.body.patientName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c-phone",
+              "leftValue": "={{ $json.body.phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c-clinic",
+              "leftValue": "={{ $json.body.clinic }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c-when",
+              "leftValue": "={{ DateTime.fromISO(String($json.body.appointmentAt ?? '')).isValid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7e466d2b-1fa2-4502-b9ac-efb5b3c6f89b",
+      "name": "Has what it needs?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'accepted', reviewed: !!String($json.body.note ?? '').trim(), executionId: $execution.id }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "1177cb23-5879-4d37-badc-bba6136720b7",
+      "name": "Accept",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "m-phone",
+              "name": "phone",
+              "type": "string",
+              "value": "={{ $('Reminder request').item.json.body.phone }}"
+            },
+            {
+              "id": "m-note",
+              "name": "note",
+              "type": "string",
+              "value": "={{ String($('Reminder request').item.json.body.note ?? '').trim() }}"
+            },
+            {
+              "id": "m-text",
+              "name": "message",
+              "type": "string",
+              "value": "={{ 'Hi ' + $('Reminder request').item.json.body.patientName + ', a reminder of your appointment at ' + $('Reminder request').item.json.body.clinic + ' on ' + DateTime.fromISO($('Reminder request').item.json.body.appointmentAt).toFormat('cccc d LLL, HH:mm') + '.' + (String($('Reminder request').item.json.body.note ?? '').trim() ? ' ' + String($('Reminder request').item.json.body.note).trim() : '') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0ff9fc27-1638-415b-952e-a68833f9b2e6",
+      "name": "Write the message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-note",
+              "leftValue": "={{ $json.note }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "00e79ab4-53a7-4351-b509-55318b2c5b87",
+      "name": "Has a note?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://caucus-slapping-launch.ngrok-free.dev/api/integration/requests",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ workflowCode: 'appointment-reminder', resumeUrl: $execution.resumeUrl, title: 'Approve reminder to ' + $('Reminder request').item.json.body.patientName, instructions: 'This reminder carries a free-text note. Approve only if the note holds no clinical detail beyond what the patient needs to attend. Message: ' + $json.message, metadata: { clinic: $('Reminder request').item.json.body.clinic } }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "87c3242d-0d72-4ba4-829f-85278aee49b1",
+      "name": "Ask for a sign-off in Ethos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "h5Q9ikA2Xawn6m7y",
+          "name": "Ethos API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "limitWaitTime": true,
+        "resumeUnit": "days",
+        "options": {}
+      },
+      "id": "bb206625-221a-4bd9-9ee9-34326979761d",
+      "name": "Wait for the decision",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        0
+      ],
+      "webhookId": "3e59740e-a4ba-4321-b300-d09a0a8f31d1",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-dec",
+              "leftValue": "={{ $json.query?.decision }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8e883f67-0c8e-4fae-9050-1583e294537e",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ to: $('Write the message').item.json.phone, text: $('Write the message').item.json.message }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "62d33a4d-a8a4-4ca1-9439-dc747c23a083",
+      "name": "Send the SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1776,
+        -144
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "n-status",
+              "name": "status",
+              "type": "string",
+              "value": "={{ $json.query?.decision ?? 'no decision within a day' }}"
+            },
+            {
+              "id": "n-why",
+              "name": "reason",
+              "type": "string",
+              "value": "={{ $json.query?.reason || ($json.query?.decidedBy ? 'Rejected by ' + $json.query.decidedBy : 'Nobody decided within a day.') }}"
+            },
+            {
+              "id": "n-req",
+              "name": "ethosRequestId",
+              "type": "string",
+              "value": "={{ $json.query?.requestId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "16a5cd80-0316-4d8d-9d28-c9e0dd6b0144",
+      "name": "Not sent",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1776,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"rejected\",\n  \"reason\": \"Send patientName, phone, clinic and appointmentAt (an ISO date). note is optional.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "b36d16ca-e368-4d5d-9e32-00f7d9972891",
+      "name": "Refuse: details missing",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        272
+      ]
+    },
+    {
+      "id": "83ceea0c-8504-4e00-a131-d1a6f7ec3028",
+      "name": "Fail: reminder not sent",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2032,
+        160
+      ],
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "={{ 'Reminder not sent: ' + $prevNode.name + ' failed. ' + ($json.error?.message ?? $json.error ?? 'No error message.') }}"
+      }
+    }
+  ],
+  "connections": {
+    "Reminder request": {
+      "main": [
+        [
+          {
+            "node": "Has what it needs?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has what it needs?": {
+      "main": [
+        [
+          {
+            "node": "Accept",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refuse: details missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept": {
+      "main": [
+        [
+          {
+            "node": "Write the message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write the message": {
+      "main": [
+        [
+          {
+            "node": "Has a note?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has a note?": {
+      "main": [
+        [
+          {
+            "node": "Ask for a sign-off in Ethos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send the SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask for a sign-off in Ethos": {
+      "main": [
+        [
+          {
+            "node": "Wait for the decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail: reminder not sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for the decision": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail: reminder not sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Send the SMS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send the SMS": {
+      "main": [
+        null,
+        [
+          {
+            "node": "Fail: reminder not sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "Dr6hRmUH7vjxX4LG",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  }
+}
